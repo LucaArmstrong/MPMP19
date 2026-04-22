@@ -7,7 +7,7 @@
 namespace mpmp19 {
 
 // determines the amount of memory in megabytes allocated to storing prime gaps
-// in reality, the program may use 1-2% more tha this amount
+// in reality, the program may use 1-2% more than this amount
 // default value is 1000 MB = 1 GB
 void set_memory_mb(uint32_t mb);
 
