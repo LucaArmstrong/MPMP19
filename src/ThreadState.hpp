@@ -9,13 +9,16 @@ namespace mpmp19 {
 
 // What sequence_thread() produces: the per-thread results before
 // cumulative state is computed.
+
+// Stores the results of sequence_thread()
 struct ThreadResult {
-    uint64_t  initial_prime;      // first prime in this thread's range
-    uint192_t partial_square_sum; // sum of squares for this thread's primes only
-    uint64_t  thread_prime_count;        // number of primes found by this thread
+    uint64_t  initial_prime;            // first prime in this thread's range
+    uint192_t partial_square_sum;       // sum of squares for this thread's primes only
+    uint64_t  thread_prime_count;       // number of primes found by this thread
 };
 
-// next_gap_size = next modulus - start modulus
+// Stores the initial, cummultative values for a thread
+// to be used for perform_modulus_operations_thread
 struct Checkpoint {
     uint64_t initial_prime;
     uint192_t initial_square_sum;   // value of S at beginning of thread sub interval

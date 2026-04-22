@@ -4,15 +4,15 @@
 #include <cstdint>
 #include "Hints.hpp"
 
+// Not supported on Windows MSVC compiler
 #ifdef __SIZEOF_INT128__
   using uint128_t = __uint128_t;
-  using int128_t = __int128_t;
 #else
-  #error "__uint128_t type not supported!"
+  #error "__uint128_t type not supported on this compiler!"
 #endif
 
 #ifndef UINT128_MAX
-  #define UINT128_MAX (((uint128_t)UINT64_MAX << 64) | UINT64_MAX)
+  #define UINT128_MAX ((uint128_t)-1)
 #endif
 
 namespace mpmp19 {

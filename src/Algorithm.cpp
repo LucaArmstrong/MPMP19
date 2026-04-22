@@ -8,36 +8,21 @@
 #include "ProcessBatch.hpp"
 #include "PerformModulus.hpp"
 
-#include "BigInt.hpp"
+#include "Context.hpp"
 #include "ProgressLogger.hpp"
 #include "PrimeGapList.hpp"
 #include "PrimeGapIterator.hpp"
 #include "TermBuffer.hpp"
-#include "mpmp19_error.hpp"
-#include "Hints.hpp"
 
 namespace {
 
-/**
- * Used internally by mpmp19_sequence() to calculate the size of the range each thread gets on the next iteration
- * It uses a prime number theorem approximation to obtain a range with roughly the same number of primes in as the 
- * primes_per_thread_interval stored in cfg. It auto adjusts its size based on the number of primes found in the previous
- * interval to keep the number of primes in each interval roughly constant.
- */
 uint64_t estimate_thread_length(bool is_first_interval, double& weight, const mpmp19::Context& ctx);
 uint64_t nth_prime_approx(uint64_t n);
-
-/**
- * Takes the start number and the thread length as parameters. This assigns a primesieve iterator to each thread and each
- * thread calls sequence_thread() with its own id. 
- */
 void sequence_interval(uint64_t start_number, uint64_t thread_length, mpmp19::Context& ctx);
-
 void sequence_thread(mpmp19::ThreadState& state, uint64_t start_number, uint64_t end_number);
-
 void find_terms(mpmp19::TermBuffer& results, mpmp19::Context& ctx);
 
-}   // namespace
+}
 
 namespace mpmp19 {
 
@@ -53,29 +38,32 @@ void run_sequence(Config& cfg, const char* progress_filename, const char* term_f
     double sequence_time = 0.0;
     double mod_time = 0.0;
 
+    // tracker variables
     uint64_t billion_count = 0;
     uint64_t start_number = 1;
-    TermBuffer results;
 
-    double weight;
-    uint64_t thread_length = estimate_thread_length(true, weight, ctx);
+    TermBuffer results;
+    double weight, t;
+    uint64_t thread_length = estimate_thread_length(true, weight, ctx);    // first call initialises the weight value
 
     for (uint64_t i = 0; i < ctx.cfg.num_intervals; i++) {
-        double t;
-
+        // sequencing phase
         t = now_seconds();
         sequence_interval(start_number, thread_length, ctx);
         sequence_time += now_seconds() - t;
 
+        // modulus phase
         t  = now_seconds();
         find_terms(results, ctx);
         mod_time += now_seconds() - t;
 
+        // deal with any terms found for this interval
         results.sort();
         results.output_terms(term_filename);
         ctx.term_count += results.count();
         log_progress(billion_count, ctx.prime_count, start_time, last_time, progress_filename);
 
+        // update values for next interval
         start_number += thread_length * ctx.cfg.num_threads;
         thread_length = estimate_thread_length(false, weight, ctx);
     }
@@ -99,7 +87,7 @@ void sequence_interval(uint64_t start_number, uint64_t thread_length, Context& c
             uint32_t i = omp_get_thread_num();
             uint64_t local_start = start_number + i * thread_length;
             uint64_t local_end = local_start + thread_length - 1;
-            auto& state = ctx.thread_states[i];
+            ThreadState& state = ctx.thread_states[i];
 
             sequence_thread(state, local_start, local_end);
         } catch(...) {
@@ -113,17 +101,17 @@ void sequence_interval(uint64_t start_number, uint64_t thread_length, Context& c
     if (ex) std::rethrow_exception(ex);
 
     // Convert each thread's partial ThreadResult into a cumulative Checkpoint.
-    // We scan left to right, accumulating the running total.
+    // Scan from left to right accumulating running totals for prime count and square sum
     uint192_t running_sum = ctx.square_sum;
     uint64_t running_count = ctx.prime_count;
 
-    for (uint32_t i = 0; i < ctx.cfg.num_threads; i++) {
-        auto& result = ctx.thread_states[i].result;
-        auto& cp = ctx.thread_states[i].checkpoint;
+    for (auto& state : ctx.thread_states) {
+        auto& result = state.result;
+        auto& cp = state.checkpoint;
 
         cp.initial_prime = result.initial_prime;
-        cp.initial_square_sum = running_sum;           // cumulative BEFORE this thread
-        cp.initial_prime_count = running_count;         // cumulative BEFORE this thread
+        cp.initial_square_sum = running_sum;            // cumulative at the START of this thread
+        cp.initial_prime_count = running_count;         // cumulative at the START of this thread
         cp.thread_prime_count = result.thread_prime_count;
 
         running_sum = u192_add_u192(running_sum, result.partial_square_sum);
@@ -143,19 +131,15 @@ void sequence_thread(ThreadState& state, uint64_t start_number, uint64_t end_num
     gaps.reset();
 
     uint192_t square_sum = u192_zero();
-    uint64_t prev_prime = 0;
     uint64_t prime_count = 0;
+    uint64_t prev_prime = 0;
     bool is_first_batch = true;
 
     while (true) {
-        // generate the next batch of primes
-        it.generate_next_primes();
-        
-        MPMP19_ASSERT(it.size_ > 0);  // shouldn't happen but be safe
+        it.generate_next_primes();  // generate the next batch of primes ~ 2^10
 
-        // on the first batch, handle the initial prime separately:
-        // store it in the checkpoint, give it a gap of 0, and start
-        // the main loop from index 1
+        // store the initial prime in the thread result and initialise prev_prime
+        // we can be certain that it.size_ > 0 as primesieve would have thrown an exception otherwise
         if (is_first_batch) {
             prev_prime = it.primes_[0];
             result.initial_prime = it.primes_[0];
@@ -163,9 +147,10 @@ void sequence_thread(ThreadState& state, uint64_t start_number, uint64_t end_num
         }
 
         if (it.primes_[it.size_ - 1] <= end_number) {
-            // all primes in this batch are valid i.e. <= end_number
+            // all primes in this batch are valid, i.e. <= end_number
             prime_count += process_full_batch(it, gaps, square_sum, prev_prime);
         } else {
+            // some primes in this batch are invalid
             prime_count += process_partial_batch(it, gaps, square_sum, prev_prime, end_number);
             break;
         }
@@ -196,29 +181,19 @@ void find_terms(TermBuffer& results, Context& ctx) {
     if (ex) std::rethrow_exception(ex);
 }
 
-/**
- * Estimates the number range [start, start + result] that contains approximately
- * cfg.primes_per_thread_interval primes starting from start_number.
- *
- * On the first call (start_number == 1 or previous_count == 0), uses the prime
- * number theorem approximation: the nth prime is approximately n * ln(n), so
- * a range of length k * ln(p) near prime p contains approximately k primes.
- *
- * On subsequent calls, adjusts the estimate proportionally based on how many
- * primes the previous interval actually contained vs the target. This corrects
- * for the PNT approximation error which grows slowly with n.
- *
- * Returns the thread length (range per thread), not the total interval length.
- * Total interval length = result * cfg.num_threads.
- */
-
+// Aims to estimate the length of interval required for the initial thread to contain ctx.cfg.primes_per_thread primes
+// We do this for the initial thread, as subsequent threads are likely to contain less primes, making this an 
+// effective way to control how much memory is used for storing prime gaps
+// On the first call (is_first_interval) the function uses a prime number theorem approximation
+// On subsequent calls it adjusts the estimate proportionally based on how many primes were found in the previous interval
+// returns the thread length (range per thread) and not the total interval length
 uint64_t estimate_thread_length(bool is_first_interval, double& weight, const Context& ctx) {
     if (is_first_interval) {
         weight = 1.0;
-        return nth_prime_approx(ctx.cfg.primes_per_thread_interval);
+        return nth_prime_approx(ctx.cfg.primes_per_thread);
     }
 
-    const uint64_t target = ctx.cfg.primes_per_thread_interval;
+    const uint64_t target = ctx.cfg.primes_per_thread;
     const uint64_t actual = ctx.thread_states[0].checkpoint.thread_prime_count;
 
     constexpr double alpha = 1.0;
@@ -229,6 +204,8 @@ uint64_t estimate_thread_length(bool is_first_interval, double& weight, const Co
     return (uint64_t)(weight * pnt_length);
 }
 
+// uses the approximation discussed in this paper - https://www.researchgate.net/publication/385813259_The_Nth_Prime_Estimates
+// to estimate the value of the nth prime
 uint64_t nth_prime_approx(uint64_t n) {
     if (n < 10)
         return n;
@@ -237,7 +214,6 @@ uint64_t nth_prime_approx(uint64_t n) {
     const double logx = std::log(x);
     const double loglogx = std::log(logx);
 
-    // https://www.researchgate.net/publication/385813259_The_Nth_Prime_Estimates
     const double prime_approx = x * (logx - 1.0 + std::log(logx + loglogx - 2.0));
     return (uint64_t)prime_approx;
 }

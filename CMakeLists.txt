@@ -47,6 +47,10 @@ target_link_libraries(mpmp19
 # =========================
 # Compiler configuration
 # =========================
+if(MSVC)
+    message(FATAL_ERROR "MSVC is not supported (requires __int128 support). Use Clang or GCC.")
+endif()
+
 if(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
     # Warnings
     target_compile_options(mpmp19 PRIVATE
@@ -70,7 +74,7 @@ if(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
 
         # Release: aggressive optimization
         $<$<CONFIG:Release>:
-            -Ofast
+            -O3
             -funroll-loops
             -fomit-frame-pointer
             -fno-semantic-interposition
@@ -80,14 +84,6 @@ if(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
         $<$<AND:$<CONFIG:Release>,$<BOOL:${MPMP19_NATIVE}>>:
             -march=native
         >
-    )
-elseif(MSVC)
-    target_compile_options(mpmp19 PRIVATE
-        /W4
-        $<$<BOOL:${MPMP19_WARNINGS_AS_ERRORS}>:/WX>
-
-        $<$<CONFIG:Debug>:/Od /Zi>
-        $<$<CONFIG:Release>:/O2>
     )
 endif()
 

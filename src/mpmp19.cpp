@@ -10,10 +10,10 @@
 
 namespace {
 
-uint32_t memory_mb = 1000;
-uint32_t num_threads = 0;    // 0 means use maximum number of omp threads
+uint32_t memory_mb = 1000;   // 1 GB by default
+uint32_t num_threads = 0;    // here 0 means use maximum number of threads available
 
-}   // namespace
+}
 
 namespace mpmp19 {
 
@@ -29,6 +29,7 @@ void set_num_threads(uint32_t n) {
 void sequence(uint64_t N, const char* progress_filename, const char* term_filename) {
     uint32_t max_threads = omp_get_max_threads();
     uint32_t threads = (num_threads == 0) ? max_threads : std::min(max_threads, num_threads);
+
     Config cfg(N, memory_mb, threads);
     run_sequence(cfg, progress_filename, term_filename);
 }

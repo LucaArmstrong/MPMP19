@@ -1,10 +1,10 @@
 #include "ProgressLogger.hpp"
 
+#include <chrono>
 #include <string>
 #include <cinttypes>
 #include <cstdint>
 #include <cstdio>
-#include <ctime>
 
 #include "FileHandle.hpp"
 #include "Config.hpp"
@@ -29,8 +29,8 @@ void report_progress(FILE* out, uint64_t billion_count, double elapsed, double i
 
 void report_end(FILE* out, uint64_t prime_count, uint32_t term_count, double total_time, double sequence_time, double mod_time) {
     // compute percentages
-    double sequence_pct = 100.0 * sequence_time / total_time;
-    double mod_pct = 100.0 * mod_time / total_time;
+    const double sequence_pct = 100.0 * sequence_time / total_time;
+    const double mod_pct = 100.0 * mod_time / total_time;
 
     fprintf(out, "\nDONE\n");
     fprintf(out, "%-28s %" PRIu64 "\n", "Primes searched:", prime_count);
@@ -41,10 +41,11 @@ void report_end(FILE* out, uint64_t prime_count, uint32_t term_count, double tot
     fprintf(out, "%-28s %.3fs (%.1f%%)\n", "Modulus check time:", mod_time, mod_pct);
 }
 
-}
+}   // namespace
 
 namespace mpmp19 {
 
+// opening a file in write mode either creates a new file with that name or clears and existing one
 void initialise_output_file(const char* filename) {
     FileHandle file(filename, "w");
 }
@@ -76,9 +77,9 @@ void log_final_stats(uint64_t prime_count, uint32_t term_count, double total_tim
 }
 
 double now_seconds() {
-    struct timespec ts;
-    clock_gettime(CLOCK_MONOTONIC, &ts);
-    return ts.tv_sec + ts.tv_nsec / 1e9;
+    using clock = std::chrono::steady_clock;
+    auto now = clock::now().time_since_epoch();
+    return std::chrono::duration<double>(now).count();
 }
 
-}
+}   // namespace

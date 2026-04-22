@@ -23,6 +23,7 @@ int main(int argc, char** argv) {
     if (errno != 0 || *end != '\0') return EXIT_FAILURE;
     if (millions > UINT64_MAX / MILLION) return EXIT_FAILURE;
 
+    // optional parameter memory_mb
     if (argc >= 3) {
         errno = 0;
         uint32_t memory_mb = strtoul(argv[2], &end, 10);
@@ -31,6 +32,7 @@ int main(int argc, char** argv) {
         mpmp19::set_memory_mb(memory_mb);
     }
 
+    // optional parameter num_threads
     if (argc >= 4) {
         errno = 0;
         uint32_t num_threads = strtoul(argv[3], &end, 10);
@@ -39,6 +41,7 @@ int main(int argc, char** argv) {
         mpmp19::set_num_threads(num_threads);
     }
 
+    // run algorithm
     try {
         mpmp19::sequence(millions * MILLION, PROGRESS_FILENAME, TERM_FILENAME);
     } catch (const std::exception& e) {

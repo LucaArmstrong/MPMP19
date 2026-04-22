@@ -40,5 +40,9 @@
 # debug information files
 *.dwo
 
-# Text files
-*.txt
+# build files
+.vscode/
+build/
+
+# Experimentation
+ModulusExperimentation.hpp

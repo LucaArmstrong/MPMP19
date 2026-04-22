@@ -23,9 +23,7 @@ struct PrimeGapList {
 
     static constexpr uint8_t LARGE_GAP_FLAG = 255;   // used to indicate that the next gap is large and stored in the next 2 bytes
 
-    static constexpr uint16_t LARGE_GAP_MASK = 0xFF00U;   // used to check if a gap is large by checking whether the largest byte is non zero
-
-    static constexpr uint16_t LARGE_GAP_THRESHOLD = 0x100U;
+    static constexpr uint16_t LARGE_GAP_THRESHOLD = 0x100U; // used to check if a gap is large (uses 2 bytes) using a simple comparison
     
     PrimeGapList() = default;
     ~PrimeGapList();

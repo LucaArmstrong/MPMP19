@@ -9,14 +9,13 @@
 namespace mpmp19 {
 
 struct PrimeGapIterator {
-    const uint8_t* data;   // const - we only read
-    size_t i = 0;     // byte position
-    size_t length;
+    const uint8_t* data;   // we only ever read from this array
+    const size_t length;   // the number of gaps never changes
+    size_t i = 0;          // byte position in the array
 
-    PrimeGapIterator(const PrimeGapList& gap_list) {
-        data = gap_list.data;
-        length = gap_list.length;
-    }
+    PrimeGapIterator(const PrimeGapList& gap_list) 
+        : data(gap_list.data)
+        , length(gap_list.length) {}
 
     inline uint16_t next_gap() {
         MPMP19_ASSERT(i < length);

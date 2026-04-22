@@ -31,7 +31,7 @@ void PrimeGapList::reserve(size_t cap_) {
 // After writing, manually increment list->length by the number of elements written.
 void PrimeGapList::reserve_full_batch() {
     if_likely(this->length + MAX_PRIMES_PER_BATCH * 3 <= cap) return;
-    reserve(cap + MAX_PRIMES_PER_BATCH * 3);
+    reserve(cap + cap / 100 + MAX_PRIMES_PER_BATCH * 3);
 }
 
 void PrimeGapList::push(uint16_t gap) {
