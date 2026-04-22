@@ -86,7 +86,3 @@ if(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
         >
     )
 endif()
-
-# FOR PROFILING
-# perf stat -e cache-misses,cache-references,L1-dcache-loads,L1-dcache-load-misses ./build/main 
-# perf record -e L1-dcache-loads-misses ./build/main 
