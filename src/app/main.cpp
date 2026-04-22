@@ -1,6 +1,7 @@
 
 #include <stdexcept>
 #include <cstdio>
+#include <cstdlib>
 #include <cstdint>
 #include <cerrno>
 #include "mpmp19.hpp"
@@ -27,7 +28,7 @@ int main(int argc, char** argv) {
     if (argc >= 3) {
         errno = 0;
         uint32_t memory_mb = strtoul(argv[2], &end, 10);
-        if (errno != 0 || *end != '\0' || memory_mb > UINT32_MAX) return EXIT_FAILURE;
+        if (errno != 0 || *end != '\0') return EXIT_FAILURE;
 
         mpmp19::set_memory_mb(memory_mb);
     }
