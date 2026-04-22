@@ -1,6 +1,6 @@
 # MPMP19
 
-This is my solution to [Matt Parker's Maths Puzzles 19 Challenge](https://www.google.com/url?sa=t&source=web&rct=j&opi=89978449&url=https://www.youtube.com/watch%3Fv%3DtBXGIXEV7tI&ved=2ahUKEwjh4sy1vv2TAxUyUkEAHSQ7EswQtwJ6BAgQEAI&usg=AOvVaw0GnALuWMn2h3Le7jIpr_ZL) — "Find numbers $n$ such that the sum of the squares of the first $n$ primes is divisible by $n$". Terms are listed as sequence A111441 on the OEIS.
+This is my solution to [Matt Parker's Maths Puzzles 19 Challenge](https://www.youtube.com/watch?v=tBXGIXEV7tI) — "Find numbers $n$ such that the sum of the squares of the first $n$ primes is divisible by $n$". Terms are listed as sequence A111441 on the OEIS.
 
 # Method
 Let $S(n)$ denote the sum of the squares of the first $n$ primes — the goal is to find values of $n$ such that $S(n) \equiv 0 \mod n$. A simple way to do this is to initialise $S=n=0$, then:
