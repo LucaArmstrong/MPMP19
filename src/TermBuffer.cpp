@@ -24,13 +24,12 @@ void TermBuffer::reset() {
     data.clear();
 }
 
-int TermBuffer::count() const {
-    return (int)data.size();
+uint32_t TermBuffer::count() const {
+    return (uint32_t)data.size();
 }
 
 void TermBuffer::sort() {
     if (count() == 0) return;   // return early if no new terms were found
-
     
     std::sort(data.begin(), data.end(), [](const Term& a, const Term& b) {
         return a.prime_count < b.prime_count;

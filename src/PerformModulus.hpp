@@ -37,10 +37,10 @@ namespace mpmp19 {
 // This avoids recomputing the full division. Checking for a term becomes
 // checking whether R = 0.
 
-inline void perform_modulus_operations_thread(ThreadState& state, TermBuffer& results) {
-    Checkpoint cp = state.checkpoint;
-    PrimeGapList& gaps = state.gaps;
-    PrimeGapIterator git = PrimeGapIterator(gaps);
+inline void perform_modulus_operations_thread(const ThreadState& state, TermBuffer& results) {
+    auto& cp = state.checkpoint;
+    auto& gaps = state.gaps;
+    PrimeGapIterator git(gaps);
 
     // extract initial checkpoint data
     uint64_t n = cp.initial_prime_count;
@@ -52,10 +52,12 @@ inline void perform_modulus_operations_thread(ThreadState& state, TermBuffer& re
     // this allows us to step over two thirds of the values of n in the hot loop
     // using the 2-4 gap logic
     unsigned int nmod6 = n % 6;
+    uint128_t delta_S;
     while (nmod6 != 1 && nmod6 != 5 && primes_remaining > 0) {
         prime += git.next_gap();
-        uint128_t square = (uint128_t)prime * (uint128_t)prime;
-        square_sum = u192_add_u128(square_sum, square);
+        delta_S = (uint128_t)prime * prime;
+        square_sum = u192_add_u128(square_sum, delta_S);
+
         n++;
         nmod6 = (nmod6 + 1) % 6;
         primes_remaining--;
@@ -76,7 +78,7 @@ inline void perform_modulus_operations_thread(ThreadState& state, TermBuffer& re
     // otherwise, next 1 or 5 wouldn't be reached and it is safe to exit the loop
     while (primes_remaining >= g) {
         prime += git.next_gap();
-        uint128_t delta_S = (uint128_t)prime * prime;
+        delta_S = (uint128_t)prime * prime;
         prime += git.next_gap();
         delta_S += (uint128_t)prime * prime;
         

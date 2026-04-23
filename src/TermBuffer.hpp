@@ -14,7 +14,7 @@ struct Term {
 struct TermBuffer {
     std::vector<Term> data;
     
-    int count() const;
+    uint32_t count() const;
     void add_term(uint64_t prime_count, uint128_t quotient);
     void reset();
     void sort();

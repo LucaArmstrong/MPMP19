@@ -20,7 +20,7 @@ uint64_t estimate_thread_length(bool is_first_interval, double& weight, const mp
 uint64_t nth_prime_approx(uint64_t n);
 void sequence_interval(uint64_t start_number, uint64_t thread_length, mpmp19::Context& ctx);
 void sequence_thread(mpmp19::ThreadState& state, uint64_t start_number, uint64_t end_number);
-void find_terms(mpmp19::TermBuffer& results, mpmp19::Context& ctx);
+void find_terms(mpmp19::TermBuffer& results, const mpmp19::Context& ctx);
 
 }
 
@@ -160,7 +160,7 @@ void sequence_thread(ThreadState& state, uint64_t start_number, uint64_t end_num
     result.thread_prime_count = prime_count;
 }
 
-void find_terms(TermBuffer& results, Context& ctx) {
+void find_terms(TermBuffer& results, const Context& ctx) {
     results.reset();
     std::exception_ptr ex = nullptr;
     

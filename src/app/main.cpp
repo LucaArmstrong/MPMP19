@@ -1,4 +1,3 @@
-
 #include <stdexcept>
 #include <cstdio>
 #include <cstdlib>

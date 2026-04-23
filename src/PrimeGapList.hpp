@@ -1,8 +1,3 @@
-// mpmp19_gap_list.h — prime gap storage, 16-bit compressed gaps
-// Not a general purpose container — designed specifically for mpmp19's
-// batch-write pattern where capacity is checked once per primesieve batch
-// and data is written directly without per-element bounds checking.
-
 #ifndef MPMP19_GAP_LIST_HPP
 #define MPMP19_GAP_LIST_HPP
 
@@ -21,9 +16,11 @@ struct PrimeGapList {
     // that a list only has to be resized at most one time
     static constexpr uint32_t MAX_PRIMES_PER_BATCH = 1U << 10;
 
-    static constexpr uint8_t LARGE_GAP_FLAG = 255;   // used to indicate that the next gap is large and stored in the next 2 bytes
+    // used to indicate that the next gap is large and stored in the next 2 bytes
+    static constexpr uint8_t LARGE_GAP_FLAG = 0xFFU;
 
-    static constexpr uint16_t LARGE_GAP_THRESHOLD = 0x100U; // used to check if a gap is large (uses 2 bytes) using a simple comparison
+    // used to check if a gap is large (uses 2 bytes) using a simple comparison
+    static constexpr uint16_t LARGE_GAP_THRESHOLD = 0x100U;
     
     PrimeGapList() = default;
     ~PrimeGapList();

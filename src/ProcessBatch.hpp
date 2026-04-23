@@ -26,7 +26,7 @@ inline uint64_t process_full_batch(const primesieve::iterator& it, PrimeGapList&
     uint8_t* RESTRICT data = gaps.data;
     size_t length = gaps.length;
 
-    // process the majority of primes in groups of 4
+    // process the majority of the primes in groups of 4
     size_t i = 0;
     while (i + 4 <= count) {
         uint64_t p0 = primes[i+0];

@@ -27,10 +27,9 @@ void PrimeGapList::reserve(size_t cap_) {
 }
 
 // Ensure room for one more full primesieve batch (MAX_PRIMESIEVE_PRIMES elements).
-// Call once before writing a batch directly to list->data + list->length.
-// After writing, manually increment list->length by the number of elements written.
+// Call once before writing a batch directly to list.data + list.length.
 void PrimeGapList::reserve_full_batch() {
-    if_likely(this->length + MAX_PRIMES_PER_BATCH * 3 <= cap) return;
+    if_likely(length + MAX_PRIMES_PER_BATCH * 3 <= cap) return;
     reserve(cap + cap / 100 + MAX_PRIMES_PER_BATCH * 3);
 }
 

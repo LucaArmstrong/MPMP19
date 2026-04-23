@@ -35,7 +35,7 @@
   #define RESTRICT
 #endif
 
-// When debug mode is enabled, assertions are added to things like bound checks and 
+// When debug mode is enabled, assertions are added to things like bound checks and validation
 #ifndef NDEBUG
   #include <cassert>
   #define MPMP19_ASSERT(x) assert(x)

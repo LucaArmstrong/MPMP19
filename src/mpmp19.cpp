@@ -10,7 +10,7 @@
 
 namespace {
 
-uint32_t memory_mb = 1000;   // 1 GB by default
+uint32_t memory_mb = 1000;   // 1 GB is used by default
 uint32_t num_threads = 0;    // here 0 means use maximum number of threads available
 
 }
