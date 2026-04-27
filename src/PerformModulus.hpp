@@ -37,9 +37,16 @@ namespace mpmp19 {
 // This avoids recomputing the full division. Checking for a term becomes
 // checking whether R = 0.
 
+// returns the distance between n and the next value congruent to 1 or 5 mod 6
+inline unsigned int get_dist(uint64_t n) {
+    unsigned int nmod6 = n % 6;
+    unsigned int target = (nmod6 <= 1) ? 1 : 5;
+    return target - nmod6;
+}
+
 inline void perform_modulus_operations_thread(const ThreadState& state, TermBuffer& results) {
-    auto& cp = state.checkpoint;
-    auto& gaps = state.gaps;
+    const auto& cp = state.checkpoint;
+    const auto& gaps = state.gaps;
     PrimeGapIterator git(gaps);
 
     // extract initial checkpoint data
@@ -51,17 +58,18 @@ inline void perform_modulus_operations_thread(const ThreadState& state, TermBuff
     // we must align the modulus to be congruent to 1 or 5 mod 6
     // this allows us to step over two thirds of the values of n in the hot loop
     // using the 2-4 gap logic
-    unsigned int nmod6 = n % 6;
-    uint128_t delta_S;
-    while (nmod6 != 1 && nmod6 != 5 && primes_remaining > 0) {
+    unsigned int dist = get_dist(n);
+    if (primes_remaining < dist) return;
+    
+    uint128_t delta_S = 0;
+    for (unsigned int i = 0; i < dist; i++) {
         prime += git.next_gap();
-        delta_S = (uint128_t)prime * prime;
-        square_sum = u192_add_u128(square_sum, delta_S);
-
-        n++;
-        nmod6 = (nmod6 + 1) % 6;
-        primes_remaining--;
+        delta_S += (uint128_t)prime * prime;
     }
+    
+    n += dist;
+    primes_remaining -= dist;
+    square_sum = u192_add_u128(square_sum, delta_S);
 
     // Here we initialise Q and R using 192-bit division, and check for a term
     uint128_t Q;
@@ -71,12 +79,11 @@ inline void perform_modulus_operations_thread(const ThreadState& state, TermBuff
     if (R == 0)
         results.add_term(n, Q);
 
-    unsigned int g = (nmod6 == 1) ? 4 : 2;
-
-    // need i + (g - 1) < delta_list.length 
-    // so that delta_S can be calculated for each iteration
-    // otherwise, next 1 or 5 wouldn't be reached and it is safe to exit the loop
+    // Main Loop:
+    unsigned int g = (n % 6 == 1) ? 4 : 2;
+    
     while (primes_remaining >= g) {
+        // advance g primes
         prime += git.next_gap();
         delta_S = (uint128_t)prime * prime;
         prime += git.next_gap();
@@ -88,15 +95,13 @@ inline void perform_modulus_operations_thread(const ThreadState& state, TermBuff
             prime += git.next_gap();
             delta_S += (uint128_t)prime * prime;
         }
-
-        // obtain the value of t
+        
         uint128_t gQ = (g == 2) ? (Q << 1) : (Q << 2);  // g*Q is either 2Q or 4Q
         uint128_t t = (uint128_t)R + delta_S - gQ;
-
-        // update values involving g at the same time to reduce register spillage
+        
         n += g;
         primes_remaining -= g;
-        g = 6 - g;   // alternate g between 2 and 4
+        g = 6 - g;   // toggle between 2 and 4
 
         // gcc compiler should see / and % and optimise to use __udivmodti4
         // which can be faster than computing quotient using __udivti3
