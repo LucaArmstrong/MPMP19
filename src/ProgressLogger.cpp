@@ -17,10 +17,10 @@ namespace {
 constexpr uint64_t BILLION = 1000000000ULL;
 
 void report_start(FILE* out, const mpmp19::Config& cfg) {
-    fprintf(out, "Number of threads = %" PRIu32 "\n", cfg.num_threads);
-    fprintf(out, "Interval memory = %" PRIu64 " MB\n", (uint64_t)cfg.memory_mb);
-    fprintf(out, "Searching the first %" PRIu64 " intervals\n", cfg.num_intervals);
-    fprintf(out, "Target: %" PRIu64 " primes\n\n", cfg.num_intervals * cfg.primes_per_interval);
+    fprintf(out, "Number of threads = %" PRIu32 "\n", cfg.num_threads_);
+    fprintf(out, "Interval memory = %" PRIu64 " MB\n", (uint64_t)cfg.memory_mb_);
+    fprintf(out, "Searching the first %" PRIu64 " intervals\n", cfg.num_intervals_);
+    fprintf(out, "Target: %" PRIu64 " primes\n\n", cfg.num_intervals_ * cfg.primes_per_interval_);
 }
 
 void report_progress(FILE* out, uint64_t billion_count, double elapsed, double interval) {
@@ -45,7 +45,7 @@ void report_end(FILE* out, uint64_t prime_count, uint32_t term_count, double tot
 
 namespace mpmp19 {
 
-// opening a file in write mode either creates a new file with that name or clears and existing one
+// opening a file in write mode either creates a new file with that name, or clears and existing one
 void initialise_output_file(const char* filename) {
     FileHandle file(filename, "w");
 }

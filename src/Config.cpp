@@ -12,22 +12,22 @@ namespace mpmp19 {
 // Reference for value: https://oeis.org/A007053
 constexpr uint64_t MAX_NUMBER = 216289611853439384ULL;
 
-Config::Config(uint64_t N, uint32_t memory_mb_, uint32_t num_threads_)
-    : memory_mb(memory_mb_)
-    , num_threads(num_threads_)
+Config::Config(uint64_t N, uint32_t memory_mb, uint32_t num_threads)
+    : memory_mb_(memory_mb)
+    , num_threads_(num_threads)
 {
-    const uint64_t bytes = (uint64_t)memory_mb * (1ULL << 20);
-    primes_per_thread = bytes / num_threads;
-    primes_per_interval = primes_per_thread * num_threads;
+    const uint64_t bytes = (uint64_t)memory_mb_ * 1000000ULL;
+    primes_per_thread_ = bytes / num_threads_;
+    primes_per_interval_ = primes_per_thread_ * num_threads_;
 
-    if (primes_per_thread == 0)
+    if (primes_per_thread_ == 0)
         throw mpmp19_error("Interval memory is too low for the prime storage!");
     
     // Compute ceil(N / primes_per_interval)
     // ~ the number of intervals needed to cover N primes
-    num_intervals = (N == 0) ? 0 : (N - 1) / primes_per_interval + 1;
+    num_intervals_ = (N == 0) ? 0 : (N - 1) / primes_per_interval_ + 1;
 
-    const uint128_t limit = (uint128_t)num_intervals * primes_per_interval;
+    const uint128_t limit = (uint128_t)num_intervals_ * primes_per_interval_;
     if (limit > (uint128_t)MAX_NUMBER)
         throw mpmp19_error("Limit exceeds maximum allowed value!");
 }

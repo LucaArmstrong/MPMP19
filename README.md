@@ -43,7 +43,7 @@ Doing this every so often would ensure the numbers being used are correct while 
 
 Tested on:
 
-- **CPU:** AMD Ryzen 5 3500U (4 cores / 8 threads, boost ~3.7 GHz)
+- **CPU:** AMD Ryzen 5 3500U (4 cores / 8 threads, clock speed ~2.1 GHz)
 - **RAM:** 6 GB
 - **OS:** Debian 13 (kernel 6.12)
 - **Compiler:** GCC 14.2.0, `-O3 -march=native`
@@ -52,7 +52,7 @@ Tested on:
 |----|--------------|-------------|
 | 10 | 542,474,231   | ~ 1 second  |
 | 11 | 1,139,733,677   | ~ 2 seconds |
-| 12 | 51,283,502,951  | ~ 2 minutes 56 seconds |
-| 13 | 230,026,580,777 | ~ 19 minutes 7 seconds |
+| 12 | 51,283,502,951  | ~ 2 minutes 51 seconds |
+| 13 | 230,026,580,777 | ~ 19 minutes 5 seconds |
 
 I decided to stop the program when it hit $n=10^{12}$, but continuing this would yield terms a(14) and a(15) within roughly a week on this hardware. The performance seems to scale well with thread count (from what I've tested). In the long run, the modulus checks take up a smaller and smaller proportion of the run time whereas the prime generation dominates. This should make sense as primes get sparser, and the interval sizes are made larger accordingly.

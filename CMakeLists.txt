@@ -68,15 +68,13 @@ if(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
     target_compile_options(mpmp19 PRIVATE
         # Debug: safe + debuggable
         $<$<CONFIG:Debug>:
-            -O0
+            -Og
             -g
         >
 
         # Release: aggressive optimization
         $<$<CONFIG:Release>:
             -O3
-            -funroll-loops
-            -fomit-frame-pointer
             -fno-semantic-interposition
         >
 

@@ -46,3 +46,8 @@ build/
 
 # Experimentation
 ModulusExperimentation.hpp
+
+progress.txt
+terms.txt
+*.data
+*.old

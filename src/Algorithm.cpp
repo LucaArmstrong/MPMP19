@@ -2,6 +2,7 @@
 
 #include <cmath>
 #include <cinttypes>
+#include <exception>
 #include <omp.h>
 #include <primesieve/iterator.hpp>
 
@@ -30,7 +31,7 @@ void run_sequence(Config& cfg, const char* progress_filename, const char* term_f
     Context ctx(cfg);
     initialise_output_file(progress_filename);
     initialise_output_file(term_filename);
-    log_start_config(ctx.cfg, progress_filename);
+    log_start_config(ctx.cfg_, progress_filename);
 
     // time variables
     const double start_time = now_seconds();
@@ -46,7 +47,7 @@ void run_sequence(Config& cfg, const char* progress_filename, const char* term_f
     double weight, t;
     uint64_t thread_length = estimate_thread_length(true, weight, ctx);    // first call initialises the weight value
 
-    for (uint64_t i = 0; i < ctx.cfg.num_intervals; i++) {
+    for (uint64_t i = 0; i < ctx.cfg_.num_intervals_; i++) {
         // sequencing phase
         t = now_seconds();
         sequence_interval(start_number, thread_length, ctx);
@@ -60,16 +61,16 @@ void run_sequence(Config& cfg, const char* progress_filename, const char* term_f
         // deal with any terms found for this interval
         results.sort();
         results.output_terms(term_filename);
-        ctx.term_count += results.count();
-        log_progress(billion_count, ctx.prime_count, start_time, last_time, progress_filename);
+        ctx.term_count_ += results.count();
+        log_progress(billion_count, ctx.prime_count_, start_time, last_time, progress_filename);
 
         // update values for next interval
-        start_number += thread_length * ctx.cfg.num_threads;
+        start_number += thread_length * ctx.cfg_.num_threads_;
         thread_length = estimate_thread_length(false, weight, ctx);
     }
 
     double total_time = now_seconds() - start_time;
-    log_final_stats(ctx.prime_count, ctx.term_count, total_time, sequence_time, mod_time, progress_filename);
+    log_final_stats(ctx.prime_count_, ctx.term_count_, total_time, sequence_time, mod_time, progress_filename);
 }
 
 }   // namespace
@@ -81,11 +82,11 @@ using namespace mpmp19;
 void sequence_interval(uint64_t start_number, uint64_t thread_length, Context& ctx) {
     std::exception_ptr ex = nullptr;
 
-    #pragma omp parallel num_threads(ctx.cfg.num_threads) 
+    #pragma omp parallel num_threads(ctx.cfg_.num_threads_) 
     {
         try {
             uint32_t i = omp_get_thread_num();
-            uint64_t local_start = start_number + i * thread_length;
+            uint64_t local_start = start_number + thread_length * i;
             uint64_t local_end = local_start + thread_length - 1;
             ThreadState& state = ctx.thread_states[i];
 
@@ -102,8 +103,8 @@ void sequence_interval(uint64_t start_number, uint64_t thread_length, Context& c
 
     // Convert each thread's partial ThreadResult into a cumulative Checkpoint.
     // Scan from left to right accumulating running totals for prime count and square sum
-    uint192_t running_sum = ctx.square_sum;
-    uint64_t running_count = ctx.prime_count;
+    uint192_t running_sum = ctx.square_sum_;
+    uint64_t running_count = ctx.prime_count_;
 
     for (auto& state : ctx.thread_states) {
         auto& result = state.result;
@@ -118,8 +119,8 @@ void sequence_interval(uint64_t start_number, uint64_t thread_length, Context& c
         running_count += result.thread_prime_count;
     }
 
-    ctx.square_sum = running_sum;
-    ctx.prime_count = running_count;
+    ctx.square_sum_ = running_sum;
+    ctx.prime_count_ = running_count;
 }
 
 void sequence_thread(ThreadState& state, uint64_t start_number, uint64_t end_number) {
@@ -162,23 +163,13 @@ void sequence_thread(ThreadState& state, uint64_t start_number, uint64_t end_num
 
 void find_terms(TermBuffer& results, const Context& ctx) {
     results.reset();
-    std::exception_ptr ex = nullptr;
     
-    #pragma omp parallel num_threads(ctx.cfg.num_threads)
+    #pragma omp parallel num_threads(ctx.cfg_.num_threads_)
     {
-        try {
-            uint32_t i = omp_get_thread_num();
-            auto& state = ctx.thread_states[i];
-            perform_modulus_operations_thread(state, results);
-        } catch(...) {
-            #pragma omp critical
-            {
-                if (!ex) ex = std::current_exception();
-            }
-        }
+        uint32_t i = omp_get_thread_num();
+        auto& state = ctx.thread_states[i];
+        perform_modulus_operations_thread(state, results);
     }
-
-    if (ex) std::rethrow_exception(ex);
 }
 
 // Aims to estimate the length of interval required for the initial thread to contain ctx.cfg.primes_per_thread primes
@@ -190,17 +181,17 @@ void find_terms(TermBuffer& results, const Context& ctx) {
 uint64_t estimate_thread_length(bool is_first_interval, double& weight, const Context& ctx) {
     if (is_first_interval) {
         weight = 1.0;
-        return nth_prime_approx(ctx.cfg.primes_per_thread);
+        return nth_prime_approx(ctx.cfg_.primes_per_thread_);
     }
 
-    const uint64_t target = ctx.cfg.primes_per_thread;
+    const uint64_t target = ctx.cfg_.primes_per_thread_;
     const uint64_t actual = ctx.thread_states[0].checkpoint.thread_prime_count;
 
     constexpr double alpha = 1.0;
     const double ratio = (double)target / (double)(actual + 1);
     weight *= std::pow(ratio, alpha);
 
-    const uint64_t pnt_length = nth_prime_approx(ctx.prime_count + target) - nth_prime_approx(ctx.prime_count);
+    const uint64_t pnt_length = nth_prime_approx(ctx.prime_count_ + target) - nth_prime_approx(ctx.prime_count_);
     return (uint64_t)(weight * pnt_length);
 }
 

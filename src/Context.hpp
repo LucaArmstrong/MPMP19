@@ -9,18 +9,18 @@
 namespace mpmp19 {
 
 struct Context {
-    Config cfg;
-    uint192_t square_sum = u192_zero();
-    uint64_t prime_count = 0;
-    uint32_t term_count = 0;
+    Config cfg_;
+    uint192_t square_sum_ = u192_zero();
+    uint64_t prime_count_ = 0;
+    uint32_t term_count_ = 0;
     std::vector<ThreadState> thread_states;
 
-    Context(Config cfg_) : cfg(cfg_)
+    Context(Config cfg) : cfg_(cfg)
     {
-        const size_t initial_cap = cfg.primes_per_thread;
+        const size_t initial_cap = cfg_.primes_per_thread_;
 
-        thread_states.reserve(cfg.num_threads);
-        for (size_t i = 0; i < cfg.num_threads; i++)
+        thread_states.reserve(cfg_.num_threads_);
+        for (size_t i = 0; i < cfg_.num_threads_; i++)
             thread_states.emplace_back(initial_cap);
     }
 };

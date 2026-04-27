@@ -23,8 +23,8 @@ inline uint64_t process_full_batch(const primesieve::iterator& it, PrimeGapList&
     // that memory during the scope of this function, allowing for better optimisation
     const size_t count = it.size_;
     const uint64_t* RESTRICT primes = it.primes_;
-    uint8_t* RESTRICT data = gaps.data;
-    size_t length = gaps.length;
+    uint8_t* RESTRICT data = gaps.data_;
+    size_t size = gaps.size_;
 
     // process the majority of the primes in groups of 4
     size_t i = 0;
@@ -47,34 +47,34 @@ inline uint64_t process_full_batch(const primesieve::iterator& it, PrimeGapList&
         uint16_t g2 = (uint16_t)(p2 - p1);
         uint16_t g3 = (uint16_t)(p3 - p2);
         p_prev = p3;
-    
+        
         // pre-emptively store the gaps as bytes
-        data[length+0] = (uint8_t)g0;
-        data[length+1] = (uint8_t)g1;
-        data[length+2] = (uint8_t)g2;
-        data[length+3] = (uint8_t)g3;
+        data[size+0] = (uint8_t)g0;
+        data[size+1] = (uint8_t)g1;
+        data[size+2] = (uint8_t)g2;
+        data[size+3] = (uint8_t)g3;
 
         // 'large' prime gaps are so rare that compound condition is still extremely likely
         // Grouping them together with | is faster than evaluating 4 separate conditions
         if_likely((g0 | g1 | g2 | g3) < PrimeGapList::LARGE_GAP_THRESHOLD) {
-            length += 4;
+            size += 4;
         } else {
             // fall back to manual checking each gap and storing accordingly
-            if (g0 < PrimeGapList::LARGE_GAP_THRESHOLD) {data[length++] = (uint8_t)g0;} 
-            else {data[length++] = PrimeGapList::LARGE_GAP_FLAG; data[length++] = (uint8_t)(g0 >> 8); data[length++] = (uint8_t)g0;}
+            if (g0 < PrimeGapList::LARGE_GAP_THRESHOLD) {data[size++] = (uint8_t)g0;} 
+            else {data[size++] = PrimeGapList::LARGE_GAP_FLAG; data[size++] = (uint8_t)(g0 >> 8); data[size++] = (uint8_t)g0;}
 
-            if (g1 < PrimeGapList::LARGE_GAP_THRESHOLD) {data[length++] = (uint8_t)g1;} 
-            else {data[length++] = PrimeGapList::LARGE_GAP_FLAG; data[length++] = (uint8_t)(g1 >> 8); data[length++] = (uint8_t)g1;}
+            if (g1 < PrimeGapList::LARGE_GAP_THRESHOLD) {data[size++] = (uint8_t)g1;} 
+            else {data[size++] = PrimeGapList::LARGE_GAP_FLAG; data[size++] = (uint8_t)(g1 >> 8); data[size++] = (uint8_t)g1;}
 
-            if (g2 < PrimeGapList::LARGE_GAP_THRESHOLD) {data[length++] = (uint8_t)g2;} 
-            else {data[length++] = PrimeGapList::LARGE_GAP_FLAG; data[length++] = (uint8_t)(g2 >> 8); data[length++] = (uint8_t)g2;}
+            if (g2 < PrimeGapList::LARGE_GAP_THRESHOLD) {data[size++] = (uint8_t)g2;} 
+            else {data[size++] = PrimeGapList::LARGE_GAP_FLAG; data[size++] = (uint8_t)(g2 >> 8); data[size++] = (uint8_t)g2;}
 
-            if (g3 < PrimeGapList::LARGE_GAP_THRESHOLD) {data[length++] = (uint8_t)g3;} 
-            else {data[length++] = PrimeGapList::LARGE_GAP_FLAG; data[length++] = (uint8_t)(g3 >> 8); data[length++] = (uint8_t)g3;}
+            if (g3 < PrimeGapList::LARGE_GAP_THRESHOLD) {data[size++] = (uint8_t)g3;} 
+            else {data[size++] = PrimeGapList::LARGE_GAP_FLAG; data[size++] = (uint8_t)(g3 >> 8); data[size++] = (uint8_t)g3;}
         }
     }
 
-    gaps.length = length;
+    gaps.size_ = size;
 
     // process the tail (at most 3 primes) using push logic.
     for (; i < count; i++) {

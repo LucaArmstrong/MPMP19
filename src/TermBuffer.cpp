@@ -24,8 +24,8 @@ void TermBuffer::reset() {
     data.clear();
 }
 
-uint32_t TermBuffer::count() const {
-    return (uint32_t)data.size();
+size_t TermBuffer::count() const {
+    return data.size();
 }
 
 void TermBuffer::sort() {
