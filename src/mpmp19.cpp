@@ -1,6 +1,6 @@
 #include "mpmp19.hpp"
 
-#include <cmath>
+#include <algorithm>
 #include <omp.h>
 
 #include "Algorithm.hpp"
