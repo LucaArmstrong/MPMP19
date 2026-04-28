@@ -27,7 +27,7 @@ void find_terms(mpmp19::TermBuffer& results, const mpmp19::Context& ctx);
 
 namespace mpmp19 {
 
-void run_sequence(Config& cfg, const char* progress_filename, const char* term_filename) {
+void run_sequence(const Config& cfg, const char* progress_filename, const char* term_filename) {
     Context ctx(cfg);
     initialise_output_file(progress_filename);
     initialise_output_file(term_filename);
@@ -88,7 +88,7 @@ void sequence_interval(uint64_t start_number, uint64_t thread_length, Context& c
             uint32_t i = omp_get_thread_num();
             uint64_t local_start = start_number + thread_length * i;
             uint64_t local_end = local_start + thread_length - 1;
-            ThreadState& state = ctx.thread_states[i];
+            ThreadState& state = ctx.thread_states_[i];
 
             sequence_thread(state, local_start, local_end);
         } catch(...) {
@@ -106,7 +106,7 @@ void sequence_interval(uint64_t start_number, uint64_t thread_length, Context& c
     uint192_t running_sum = ctx.square_sum_;
     uint64_t running_count = ctx.prime_count_;
 
-    for (auto& state : ctx.thread_states) {
+    for (auto& state : ctx.thread_states_) {
         auto& result = state.result;
         auto& cp = state.checkpoint;
 
@@ -167,7 +167,7 @@ void find_terms(TermBuffer& results, const Context& ctx) {
     #pragma omp parallel num_threads(ctx.cfg_.num_threads_)
     {
         uint32_t i = omp_get_thread_num();
-        auto& state = ctx.thread_states[i];
+        auto& state = ctx.thread_states_[i];
         perform_modulus_operations_thread(state, results);
     }
 }
@@ -185,7 +185,7 @@ uint64_t estimate_thread_length(bool is_first_interval, double& weight, const Co
     }
 
     const uint64_t target = ctx.cfg_.primes_per_thread_;
-    const uint64_t actual = ctx.thread_states[0].checkpoint.thread_prime_count;
+    const uint64_t actual = ctx.thread_states_[0].checkpoint.thread_prime_count;
 
     constexpr double alpha = 1.0;
     const double ratio = (double)target / (double)(actual + 1);
