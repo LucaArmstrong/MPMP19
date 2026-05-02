@@ -16,9 +16,9 @@ jobs:
     - name: Install Build & Perf Tools
       run: |
         sudo apt-get update
-        # Added libprimesieve-dev to the list below
-        sudo apt-get install -y build-essential cmake libprimesieve-dev linux-tools-common linux-tools-generic linux-tools-$(uname -r)
-
+        # Install generic azure tools instead of specific version
+        sudo apt-get install -y build-essential cmake libprimesieve-dev linux-tools-azure linux-cloud-tools-azure
+        
     - name: Configure CMake
       # -B build creates a build directory, -DCMAKE_BUILD_TYPE=Release ensures optimisations
       run: cmake -B build -DCMAKE_BUILD_TYPE=Release
@@ -29,8 +29,14 @@ jobs:
 
     - name: Run Performance Test
       run: |
-        # Allow perf to access kernel counters in the virtual environment
-        sudo sysctl kernel.perf_event_paranoid=-1
-
-        # run the performance test
-        sudo perf stat ./build/mpmp19 10000 1000
+        sudo sysctl kernel.perf_event_paranoid=-1 || true
+        
+        # Manually find the perf binary if the wrapper fails
+        PERF_BIN=$(find /usr/lib/linux-tools -name perf -executable | head -n 1)
+        
+        if [ -z "$PERF_BIN" ]; then
+          echo "Perf not found, running without stat"
+          ./build/mpmp19 10000 1000
+        else
+          sudo $PERF_BIN stat ./build/mpmp19 10000 1000
+        fi
