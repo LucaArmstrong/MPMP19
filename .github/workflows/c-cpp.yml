@@ -33,4 +33,4 @@ jobs:
         sudo sysctl kernel.perf_event_paranoid=-1
 
         # run the performance test
-        sudo perf stat ./build/mpmp19
+        sudo perf stat ./build/mpmp19 10000 1000
