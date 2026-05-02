@@ -1,0 +1,35 @@
+name: Performance Benchmark
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  benchmark:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Install Build & Perf Tools
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y build-essential cmake linux-tools-common linux-tools-generic linux-tools-$(uname -r)
+
+    - name: Configure CMake
+      # -B build creates a build directory, -DCMAKE_BUILD_TYPE=Release ensures optimisations
+      run: cmake -B build -DCMAKE_BUILD_TYPE=Release
+
+    - name: Build
+      # --build build runs the actual compilation inside the build directory
+      run: cmake --build build
+
+    - name: Run Performance Test
+      run: |
+        # Allow perf to access kernel counters in the virtual environment
+        sudo sysctl kernel.perf_event_paranoid=-1
+
+        # run the performance test
+        sudo perf stat ./build/mpmp19
