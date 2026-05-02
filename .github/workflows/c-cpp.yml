@@ -16,7 +16,8 @@ jobs:
     - name: Install Build & Perf Tools
       run: |
         sudo apt-get update
-        sudo apt-get install -y build-essential cmake linux-tools-common linux-tools-generic linux-tools-$(uname -r)
+        # Added libprimesieve-dev to the list below
+        sudo apt-get install -y build-essential cmake libprimesieve-dev linux-tools-common linux-tools-generic linux-tools-$(uname -r)
 
     - name: Configure CMake
       # -B build creates a build directory, -DCMAKE_BUILD_TYPE=Release ensures optimisations
