@@ -52,7 +52,7 @@ Tested on:
 |----|--------------|-------------|
 | 10 | 542,474,231   | ~ 1 second  |
 | 11 | 1,139,733,677   | ~ 2 seconds |
-| 12 | 51,283,502,951  | ~ 2 minutes 51 seconds |
-| 13 | 230,026,580,777 | ~ 19 minutes 5 seconds |
+| 12 | 51,283,502,951  | ~ 3 minutes 43 seconds |
+| 13 | 230,026,580,777 | ~ 19 minutes 25 seconds |
 
-I decided to stop the program when it hit $n=10^{12}$, but continuing this would yield terms a(14) and a(15) within roughly a week on this hardware. The performance seems to scale well with thread count (from what I've tested). In the long run, the modulus checks take up a smaller and smaller proportion of the run time whereas the prime generation dominates. This should make sense as primes get sparser, and the interval sizes are made larger accordingly.
+I decided to stop the program when it hit $n=10^{12}$, but continuing this would yield terms a(14) and a(15) within a week on this hardware. The performance seems to scale well with thread count (from what I've tested). In the long run, the modulus checks take up a smaller and smaller proportion of the run time whereas the prime generation dominates. This should make sense as primes get sparser, and the interval sizes are made larger accordingly.
