@@ -9,7 +9,7 @@ Let $S(n)$ denote the sum of the squares of the first $n$ primes — the goal is
 2. Compute $S(n)\mod n$ — if zero then record $n$ as a term.
 3. Repeat.
 
-This is straightforward to implement, but inherently sequential. The aim of this method is to take advantage of parallel processing as much as possible. To do this, we split the computation into intervals, and further divide each interval into equal-sized segments (one per thread). Each interval is processed as follows: (note this is just an overview)
+This is straightforward to implement, but inherently sequential. The aim of this method is to take advantage of parallel processing as much as possible. To do this, we split the computation into intervals, and further divide each interval into equal-sized segments (one per thread). Each interval is processed as follows:
 
 - **Pass 1:** Each thread generates the primes in its segment, sums their squares, and stores the prime gaps between consecutive primes.
 - **Fixup:** Using the cumulative $S(n)$ and $n$ at the start of the interval, and the partial sums from each thread, the exact values of $S(n)$ and $n$ at the start of each thread are reconstructed.
@@ -25,7 +25,7 @@ This program is written in C++ and makes use of Kim Walisch's [primesieve](https
 ### Key Features and Optimisations
 
 - Uses one `primesieve::iterator` per thread to sieve primes in parallel across disjoint ranges.
-- Uses a custom 192-bit unsigned integer type to accumulate sums of prime squares. This extends the theoretical search limit of the program from roughly $10^{12}$ (using only 128-bit integers) to over $10^{18}$, at which point other factors in the program become more important.
+- Uses a custom 192-bit unsigned integer type to accumulate sums of prime squares. This extends the theoretical search limit of the program from roughly $10^{12}$ (using only 128-bit integers) to over $10^{18}$, at which point other factors determine the limit. 
 - Prime gaps are stored rather than primes themselves, reducing the memory required by approximately 8x (most gaps fit into a single byte compared with 8 bytes for primes themselves). A variable length encoding handles the rare larger gaps with almost no overhead. 
 - Uses a recurrence relation to update the quotient $Q = \lfloor S(n)/n\rfloor$ and remainder $R = S(n)\mod n$ incrementally as $n$ advances, avoiding 192-bit division entirely.
 - Exploits the fact that terms can only occur when $n\equiv 1 \text{ or } 5\mod 6$ to eliminate two thirds of the division operations in the modular arithmetic loop.
@@ -35,7 +35,7 @@ It is recommended that the program be compiled with the highest optimisation lev
 
 # Verification
 
-This program does not currently use any verification to test that the square sums and the terms calculated are indeed valid. The most effective method I can think of doing this would be modifying a combinatorial algorithm for counting primes to instead sum their squares. For instance, a modified version of the Deleglise-Rivat algorithm could compute values of $S(n)$ in just $O\left(n^{2/3} / \log^{4/3}(n)\right)$ steps, which is way faster than recomputing the entire sequence from scratch. It also means that if there did happen to be an error in the code, instead of repeating that error in another run, we'd have a completely different method of checking values. This means if both values match, we can be certain that the sequence values are correct. 
+This program does not currently use any verification to test that the square sums and the terms calculated are indeed valid. The most effective method I can think of doing this would be modifying a combinatorial algorithm for counting primes to instead sum their squares. For instance, a modified version of the Deleglise-Rivat algorithm could compute values of $S(n)$ in just $O\left(n^{2/3} / \log^{4/3}(n)\right)$ steps, which is way faster than recomputing the entire sequence from scratch. It also means that if there did happen to be an error in the code, instead of repeating that error in another run, we'd have a completely different method of checking values. If both values match, we can be certain that the sequence values are correct. 
 
 Doing this every so often would ensure the numbers being used are correct while not increasing the runtime significantly. However, implementing a modified Deleglise-Rivat correctly, with 192-bit arithmetic is non-trivial, and not something I will be attempting anytime soon. 
 
@@ -55,4 +55,4 @@ Tested on:
 | 12 | 51,283,502,951  | ~ 3 minutes 43 seconds |
 | 13 | 230,026,580,777 | ~ 19 minutes 25 seconds |
 
-I decided to stop the program when it hit $n=10^{12}$, but continuing this would yield terms a(14) and a(15) within a week on this hardware. The performance seems to scale well with thread count (from what I've tested). In the long run, the modulus checks take up a smaller and smaller proportion of the run time whereas the prime generation dominates. This should make sense as primes get sparser, and the interval sizes are made larger accordingly.
+I decided to stop the program when it hit $n=10^{13}$, but continuing this would yield terms a(14) and a(15) within a week on this hardware. The performance seems to scale well with the number of cores (from what I've tested). In the long run, the modulus checks take up a smaller and smaller proportion of the run time whereas the prime generation dominates. This should make sense as primes get sparser, and the interval sizes are made larger accordingly.
